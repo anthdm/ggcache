@@ -3,7 +3,9 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"log"
+	"time"
 
 	"github.com/anthdm/ggcache/cache"
 	"github.com/anthdm/ggcache/client"
@@ -22,27 +24,42 @@ func main() {
 		LeaderAddr: *leaderAddr,
 	}
 
-	// go func() {
-	// 	time.Sleep(time.Second * 2)
-	// 	client, err := client.New(":3000", client.Options{})
-	// 	if err != nil {
-	// 		log.Fatal(err)
-	// 	}
-
-	// 	for i := 0; i < 10; i++ {
-	// 		SendCommand(client)
-	// 	}
-	// 	client.Close()
-	// 	time.Sleep(time.Second * 1)
-	// }()
+	go func() {
+		time.Sleep(time.Second * 10)
+		if opts.IsLeader {
+			SendStuff()
+		}
+	}()
 
 	server := NewServer(opts, cache.New())
 	server.Start()
 }
 
-func SendCommand(c *client.Client) {
-	_, err := c.Set(context.Background(), []byte("gg"), []byte("Anthony"), 0)
-	if err != nil {
-		log.Fatal(err)
+func SendStuff() {
+	for i := 0; i < 100; i++ {
+		go func(i int) {
+			client, err := client.New(":3000", client.Options{})
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			var (
+				key   = []byte(fmt.Sprintf("key_%d", i))
+				value = []byte(fmt.Sprintf("val_%d", i))
+			)
+
+			err = client.Set(context.Background(), key, value, 0)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			fetchedValue, err := client.Get(context.Background(), key)
+			if err != nil {
+				log.Fatal(err)
+			}
+			fmt.Println(string(fetchedValue))
+
+			client.Close()
+		}(i)
 	}
 }
