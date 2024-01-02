@@ -40,6 +40,6 @@ func BenchmarkParseCommand(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		r := bytes.NewReader(cmd.Bytes())
-		ParseCommand(r)
+		_, _ = ParseCommand(r)
 	}
 }

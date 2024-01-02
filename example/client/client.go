@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/anthdm/ggcache/proto"
+	"github.com/anthdm/ggcache/example/proto"
 )
 
 type Options struct{}
@@ -20,7 +20,7 @@ func NewFromConn(conn net.Conn) *Client {
 	}
 }
 
-func New(endpoint string, opts Options) (*Client, error) {
+func New(endpoint string, _ Options) (*Client, error) {
 	conn, err := net.Dial("tcp", endpoint)
 	if err != nil {
 		return nil, err
@@ -31,7 +31,7 @@ func New(endpoint string, opts Options) (*Client, error) {
 	}, nil
 }
 
-func (c *Client) Get(ctx context.Context, key []byte) ([]byte, error) {
+func (c *Client) Get(_ context.Context, key []byte) ([]byte, error) {
 	cmd := &proto.CommandGet{
 		Key: key,
 	}
@@ -55,7 +55,7 @@ func (c *Client) Get(ctx context.Context, key []byte) ([]byte, error) {
 	return resp.Value, nil
 }
 
-func (c *Client) Set(ctx context.Context, key []byte, value []byte, ttl int) error {
+func (c *Client) Set(_ context.Context, key []byte, value []byte, ttl int) error {
 	cmd := &proto.CommandSet{
 		Key:   key,
 		Value: value,

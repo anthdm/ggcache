@@ -9,9 +9,9 @@ import (
 	"net"
 	"time"
 
-	"github.com/anthdm/ggcache/cache"
-	"github.com/anthdm/ggcache/client"
-	"github.com/anthdm/ggcache/proto"
+	"github.com/anthdm/ggcache"
+	"github.com/anthdm/ggcache/example/client"
+	"github.com/anthdm/ggcache/example/proto"
 )
 
 type ServerOpts struct {
@@ -25,10 +25,10 @@ type Server struct {
 
 	members map[*client.Client]struct{}
 
-	cache cache.Cacher
+	cache ggcache.Cacher
 }
 
-func NewServer(opts ServerOpts, c cache.Cacher) *Server {
+func NewServer(opts ServerOpts, c ggcache.Cacher) *Server {
 	return &Server{
 		ServerOpts: opts,
 		cache:      c,
@@ -70,7 +70,9 @@ func (s *Server) dialLeader() error {
 
 	log.Println("connected to leader:", s.LeaderAddr)
 
-	binary.Write(conn, binary.LittleEndian, proto.CmdJoin)
+	if err = binary.Write(conn, binary.LittleEndian, proto.CmdJoin); err != nil {
+		return err
+	}
 
 	s.handleConn(conn)
 
@@ -78,7 +80,9 @@ func (s *Server) dialLeader() error {
 }
 
 func (s *Server) handleConn(conn net.Conn) {
-	defer conn.Close()
+	defer func(conn net.Conn) {
+		_ = conn.Close()
+	}(conn)
 
 	//fmt.Println("connection made:", conn.RemoteAddr())
 
@@ -100,15 +104,15 @@ func (s *Server) handleConn(conn net.Conn) {
 func (s *Server) handleCommand(conn net.Conn, cmd any) {
 	switch v := cmd.(type) {
 	case *proto.CommandSet:
-		s.handleSetCommand(conn, v)
+		_ = s.handleSetCommand(conn, v)
 	case *proto.CommandGet:
-		s.handleGetCommand(conn, v)
+		_ = s.handleGetCommand(conn, v)
 	case *proto.CommandJoin:
-		s.handleJoinCommand(conn, v)
+		_ = s.handleJoinCommand(conn, v)
 	}
 }
 
-func (s *Server) handleJoinCommand(conn net.Conn, cmd *proto.CommandJoin) error {
+func (s *Server) handleJoinCommand(conn net.Conn, _ *proto.CommandJoin) error {
 	fmt.Println("member just joined the cluster:", conn.RemoteAddr())
 
 	s.members[client.NewFromConn(conn)] = struct{}{}
