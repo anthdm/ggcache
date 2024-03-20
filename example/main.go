@@ -7,8 +7,8 @@ import (
 	"log"
 	"time"
 
-	"github.com/anthdm/ggcache/cache"
-	"github.com/anthdm/ggcache/client"
+	"github.com/anthdm/ggcache"
+	"github.com/anthdm/ggcache/example/client"
 )
 
 func main() {
@@ -31,14 +31,14 @@ func main() {
 		}
 	}()
 
-	server := NewServer(opts, cache.New())
-	server.Start()
+	server := NewServer(opts, ggcache.New())
+	_ = server.Start()
 }
 
 func SendStuff() {
 	for i := 0; i < 100; i++ {
 		go func(i int) {
-			client, err := client.New(":3000", client.Options{})
+			c, err := client.New(":3000", client.Options{})
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -48,18 +48,18 @@ func SendStuff() {
 				value = []byte(fmt.Sprintf("val_%d", i))
 			)
 
-			err = client.Set(context.Background(), key, value, 0)
+			err = c.Set(context.Background(), key, value, 0)
 			if err != nil {
 				log.Fatal(err)
 			}
 
-			fetchedValue, err := client.Get(context.Background(), key)
+			fetchedValue, err := c.Get(context.Background(), key)
 			if err != nil {
 				log.Fatal(err)
 			}
 			fmt.Println(string(fetchedValue))
 
-			client.Close()
+			_ = c.Close()
 		}(i)
 	}
 }
